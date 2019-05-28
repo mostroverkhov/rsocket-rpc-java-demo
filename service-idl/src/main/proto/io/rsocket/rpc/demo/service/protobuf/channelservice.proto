@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package io.rsocket.rpc.demo.service;
+
+option java_package = "io.rsocket.rpc.demo.service.protobuf";
+option java_outer_classname = "ChannelServiceProto";
+option java_multiple_files = true;
+
+import "io/rsocket/rpc/demo/service/protobuf/data.proto";
+
+service ChannelService {
+
+    rpc channel (stream Request) returns (stream Response) {}
+}

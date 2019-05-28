@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package io.rsocket.rpc.demo.service;
+
+option java_package = "io.rsocket.rpc.demo.service.protobuf";
+option java_outer_classname = "ServiceProto";
+option java_multiple_files = true;
+
+message Request {
+    string message = 1;
+}
+
+message Response {
+    string message = 1;
+}

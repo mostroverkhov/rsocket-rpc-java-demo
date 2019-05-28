@@ -1,0 +1,61 @@
+apply plugin: 'com.google.protobuf'
+apply plugin: 'idea'
+apply plugin: 'application'
+
+sourceCompatibility = 1.8
+
+sourceSets {
+    main {
+        proto { srcDir 'src/main/proto' }
+    }
+
+    test {
+        proto { srcDir 'src/test/proto' }
+    }
+}
+
+protobuf {
+    generatedFilesBaseDir = "${projectDir}/src/generated"
+
+    protoc {
+        artifact = "com.google.protobuf:protoc:${protobufVersion}"
+    }
+
+    plugins {
+        rsocketRpc {
+            artifact = "io.rsocket.rpc:rsocket-rpc-protobuf:${rsocketRpcVersion}"
+        }
+        generateProtoTasks {
+            ofSourceSet('main')*.plugins {
+                rsocketRpc {}
+            }
+        }
+    }
+}
+
+idea {
+    module {
+        sourceDirs += file("src/main/proto")
+        sourceDirs += file("src/generated/main/java")
+        sourceDirs += file("src/generated/main/rsocketRpc")
+
+        generatedSourceDirs += file('src/generated/main/java')
+        generatedSourceDirs += file('src/generated/main/rsocketRpc')
+    }
+}
+
+clean {
+    delete 'src/generated'
+}
+
+dependencies {
+    protobuf project(':service-idl')
+    implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
+    implementation "com.google.protobuf:protoc:${protobufVersion}"
+    implementation "io.rsocket:rsocket-core:${rsocketVersion}"
+    implementation "io.rsocket:rsocket-transport-netty:${rsocketVersion}"
+    implementation "io.rsocket.rpc:rsocket-rpc-protobuf:${rsocketRpcVersion}"
+    implementation "io.rsocket.rpc:rsocket-rpc-core:${rsocketRpcVersion}"
+}
+
+mainClassName = 'io.rsocket.rpc.demo.service.Main'

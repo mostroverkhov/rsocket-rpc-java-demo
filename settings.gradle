@@ -1,0 +1,4 @@
+rootProject.name = 'rsocket-rpc-java-demo'
+include 'demo'
+include 'service-idl'
+

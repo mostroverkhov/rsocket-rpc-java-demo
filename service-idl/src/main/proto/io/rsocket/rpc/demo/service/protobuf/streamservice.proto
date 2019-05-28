@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package io.rsocket.rpc.demo.service;
+
+option java_package = "io.rsocket.rpc.demo.service.protobuf";
+option java_outer_classname = "StreamServiceProto";
+option java_multiple_files = true;
+
+import "io/rsocket/rpc/demo/service/protobuf/data.proto";
+
+service StreamService {
+
+    rpc response (Request) returns (Response) {}
+    rpc serverStream (Request) returns (stream Response) {}
+    rpc clientStream (stream Request) returns (Response) {}
+}
