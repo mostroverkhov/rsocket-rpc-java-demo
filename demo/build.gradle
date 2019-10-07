@@ -27,7 +27,9 @@ protobuf {
         }
         generateProtoTasks {
             ofSourceSet('main')*.plugins {
-                rsocketRpc {}
+                rsocketRpc {
+                    option "generate-blocking-api"
+                }
             }
         }
     }
