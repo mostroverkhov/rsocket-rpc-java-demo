@@ -53,24 +53,12 @@ public class Main {
                             Instant now = Instant.now();
                             Request request = Request.newBuilder().setMessage(now.toString()).build();
 
-                            Mono<Response> response = streamServiceClient
-                                    .response(request)
-                                    /*.doOnNext(r -> System.out.println(r.getMessage()))*/;
-
-                            Mono<Response> clientStream = streamServiceClient
-                                    .clientStream(Mono.just(request))
-                                    /*.doOnNext(r -> System.out.println(r.getMessage()))*/;
-
-                            Flux<Response> serverStream = streamServiceClient
-                                    .serverStream(request)
-                                    /*.doOnNext(r -> System.out.println(r.getMessage()))*/;
-
-                            Flux<Response> channel = channelServiceClient.
-                                    channel(Mono.just(request))
-                                    /*.doOnNext(r -> System.out.println(r.getMessage()))*/;
-
-                            return Flux.interval(Duration.ofMillis(10)).onBackpressureDrop()
-                            .flatMap(v -> response.mergeWith(clientStream).mergeWith(serverStream).mergeWith(channel),256);
+                    return Flux.interval(Duration.ofMillis(10)).onBackpressureDrop()
+                            .flatMap(v -> streamServiceClient
+                                    .response(request).mergeWith(streamServiceClient
+                                                    .clientStream(Mono.just(request))).mergeWith(streamServiceClient
+                                                                    .serverStream(request)).mergeWith(channelServiceClient.
+                                                                                    channel(Mono.just(request))),256);
                         }
                 ).repeatWhen(f -> f.delayElements(Duration.ofMillis(1000)))
                 .take(Duration.ofSeconds(120))
