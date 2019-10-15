@@ -7,10 +7,13 @@ import io.rsocket.rpc.demo.service.protobuf.Response;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
+import java.time.Duration;
+
 public class DefaultChannelService implements ChannelService {
 
     @Override
     public Flux<Response> channel(Publisher<Request> messages, ByteBuf metadata) {
-        return Flux.from(messages).map(m -> Response.newBuilder().setMessage("channel: " + m.getMessage()).build());
+        return Flux.from(messages).flatMap(m -> Flux.interval(Duration.ofMillis(100)).onBackpressureDrop()
+        .map(v -> Response.newBuilder().setMessage("channel: " + m.getMessage()).build()));
     }
 }

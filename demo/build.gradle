@@ -58,6 +58,8 @@ dependencies {
     implementation "io.rsocket:rsocket-transport-netty:${rsocketVersion}"
     implementation "io.rsocket.rpc:rsocket-rpc-protobuf:${rsocketRpcVersion}"
     implementation "io.rsocket.rpc:rsocket-rpc-core:${rsocketRpcVersion}"
+    implementation "io.netty:netty-tcnative-boringssl-static:${nettyTcnativeVersion}"
+    implementation "io.netty:netty-tcnative:${nettyTcnativeVersion}"
 }
 
 mainClassName = 'io.rsocket.rpc.demo.service.Main'

@@ -9,7 +9,15 @@ subprojects {
         }
     }
 
+    configurations.all {
+        resolutionStrategy {
+            force "io.rsocket:rsocket-core:${rsocketVersion}"
+        }
+    }
+
     repositories {
         jcenter()
+        maven {url 'https://oss.jfrog.org/artifactory/libs-snapshot' }
+        maven { url 'http://repo.spring.io/milestone' }
     }
 }

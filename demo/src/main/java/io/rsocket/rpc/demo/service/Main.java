@@ -1,29 +1,49 @@
 package io.rsocket.rpc.demo.service;
 
+import io.netty.handler.ssl.OpenSsl;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import io.netty.handler.ssl.util.SelfSignedCertificate;
 import io.rsocket.RSocketFactory;
 import io.rsocket.rpc.demo.service.protobuf.*;
 import io.rsocket.rpc.rsocket.RequestHandlingRSocket;
+import io.rsocket.transport.ClientTransport;
 import io.rsocket.transport.netty.client.TcpClientTransport;
+import io.rsocket.transport.netty.client.WebsocketClientTransport;
 import io.rsocket.transport.netty.server.CloseableChannel;
 import io.rsocket.transport.netty.server.TcpServerTransport;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.netty.tcp.TcpClient;
+import reactor.netty.tcp.TcpServer;
 
+import javax.net.ssl.SSLException;
+import java.net.InetSocketAddress;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 
 public class Main {
 
-    public static void main(String... args) {
-        CloseableChannel server = RSocketFactory.receive()
-                .acceptor((setup, senderRSocket) -> Mono.just(serverHandler()))
-                .transport(TcpServerTransport.create("localhost", 5000))
-                .start()
-                .block();
+    public static void main(String... args) throws Exception {
+        final SslProvider sslProvider = sslProvider();
+        InetSocketAddress address = new InetSocketAddress("localhost", 5000);
+
+        SslContext clientSslContext = testClientContext(sslProvider);
+        TcpClient client =
+                TcpClient.create()
+                        .addressSupplier(() -> address)
+                        .secure(spec -> spec.sslContext(clientSslContext));
+
+        ClientTransport clientTransport = TcpClientTransport.create(client);
 
         RSocketFactory.connect()
-                .transport(TcpClientTransport.create(server.address()))
+                .transport(clientTransport)
                 .start()
                 .flatMapMany(rSocket -> {
 
@@ -35,38 +55,42 @@ public class Main {
 
                             Mono<Response> response = streamServiceClient
                                     .response(request)
-                                    .doOnNext(r -> System.out.println(r.getMessage()));
+                                    /*.doOnNext(r -> System.out.println(r.getMessage()))*/;
 
                             Mono<Response> clientStream = streamServiceClient
                                     .clientStream(Mono.just(request))
-                                    .doOnNext(r -> System.out.println(r.getMessage()));
+                                    /*.doOnNext(r -> System.out.println(r.getMessage()))*/;
 
                             Flux<Response> serverStream = streamServiceClient
                                     .serverStream(request)
-                                    .doOnNext(r -> System.out.println(r.getMessage()));
+                                    /*.doOnNext(r -> System.out.println(r.getMessage()))*/;
 
                             Flux<Response> channel = channelServiceClient.
                                     channel(Mono.just(request))
-                                    .doOnNext(r -> System.out.println(r.getMessage()));
+                                    /*.doOnNext(r -> System.out.println(r.getMessage()))*/;
 
-                            return response.then(clientStream).thenMany(serverStream).thenMany(channel);
-
+                            return Flux.interval(Duration.ofMillis(10)).onBackpressureDrop()
+                            .flatMap(v -> response.mergeWith(clientStream).mergeWith(serverStream).mergeWith(channel),256);
                         }
-                ).repeatWhen(f -> f.delayElements(Duration.ofSeconds(1)))
+                ).repeatWhen(f -> f.delayElements(Duration.ofMillis(1000)))
                 .take(Duration.ofSeconds(120))
-                .doFinally(s -> server.dispose())
                 .blockLast();
     }
 
-    private static RequestHandlingRSocket serverHandler() {
-        return new RequestHandlingRSocket(
-                new StreamServiceServer(
-                        new DefaultStreamService(),
-                        Optional.empty(),
-                        Optional.empty()),
-                new ChannelServiceServer(
-                        new DefaultChannelService(),
-                        Optional.empty(),
-                        Optional.empty()));
+    private static SslContext testClientContext(SslProvider sslProvider) throws SSLException {
+        return SslContextBuilder.forClient()
+                .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                .sslProvider(sslProvider)
+                .build();
+    }
+
+    private static SslProvider sslProvider() {
+        final SslProvider sslProvider;
+        if (OpenSsl.isAvailable()) {
+            sslProvider = SslProvider.OPENSSL_REFCNT;
+        } else {
+            sslProvider = SslProvider.JDK;
+        }
+        return sslProvider;
     }
 }

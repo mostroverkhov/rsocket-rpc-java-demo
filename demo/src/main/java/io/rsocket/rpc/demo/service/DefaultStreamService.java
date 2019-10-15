@@ -8,6 +8,8 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+
 /** Service that returns a hello message. */
 public class DefaultStreamService implements StreamService {
 
@@ -19,7 +21,7 @@ public class DefaultStreamService implements StreamService {
   @Override
   public Flux<Response> serverStream(Request message, ByteBuf metadata) {
 
-    return Flux.range(1,3).map(v -> Response
+    return Flux.interval(Duration.ofMillis(100)).onBackpressureDrop().map(v -> Response
             .newBuilder()
             .setMessage(String.format("server stream - %d %s", v, message.getMessage()))
             .build());
