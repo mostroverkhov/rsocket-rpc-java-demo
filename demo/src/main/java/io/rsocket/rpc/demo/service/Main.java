@@ -1,11 +1,15 @@
 package io.rsocket.rpc.demo.service;
 
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
+import io.netty.util.ResourceLeakDetector;
 import io.rsocket.RSocketFactory;
 import io.rsocket.rpc.demo.service.protobuf.*;
 import io.rsocket.rpc.rsocket.RequestHandlingRSocket;
@@ -31,12 +35,21 @@ import java.util.concurrent.Callable;
 public class Main {
 
     public static void main(String... args) throws Exception {
+        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
         final SslProvider sslProvider = sslProvider();
         InetSocketAddress address = new InetSocketAddress("localhost", 5000);
 
         SslContext clientSslContext = testClientContext(sslProvider);
         TcpClient client =
-                TcpClient.create()
+                TcpClient.create().doOnConnected(c -> {
+                    c.addHandlerLast(new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                            System.out.println(cause);
+                            super.exceptionCaught(ctx, cause);
+                        }
+                    });
+                })
                         .addressSupplier(() -> address)
                         .secure(spec -> spec.sslContext(clientSslContext));
 
@@ -62,6 +75,7 @@ public class Main {
                         }
                 ).repeatWhen(f -> f.delayElements(Duration.ofMillis(1000)))
                 .take(Duration.ofSeconds(120))
+                .doOnNext(r -> System.out.println(r.getMessage()))
                 .blockLast();
     }
 
