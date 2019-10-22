@@ -21,9 +21,9 @@ public class DefaultStreamService implements StreamService {
   @Override
   public Flux<Response> serverStream(Request message, ByteBuf metadata) {
 
-    return Flux.interval(Duration.ofMillis(100)).onBackpressureDrop().map(v -> Response
+    return Flux.just(Response
             .newBuilder()
-            .setMessage(String.format("server stream - %d %s", v, message.getMessage()))
+            .setMessage(String.format("server stream - %s", message.getMessage()))
             .build());
   }
 

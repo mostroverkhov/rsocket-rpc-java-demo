@@ -66,12 +66,11 @@ public class Main {
                             Instant now = Instant.now();
                             Request request = Request.newBuilder().setMessage(now.toString()).build();
 
+                    Flux<Response> response = channelServiceClient
+                            .channel(Flux.just(request));
+
                     return Flux.interval(Duration.ofMillis(10)).onBackpressureDrop()
-                            .flatMap(v -> streamServiceClient
-                                    .response(request).mergeWith(streamServiceClient
-                                                    .clientStream(Mono.just(request))).mergeWith(streamServiceClient
-                                                                    .serverStream(request)).mergeWith(channelServiceClient.
-                                                                                    channel(Mono.just(request))),256);
+                            .flatMap(v -> response,1);
                         }
                 ).repeatWhen(f -> f.delayElements(Duration.ofMillis(1000)))
                 .take(Duration.ofSeconds(120))

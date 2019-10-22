@@ -6,6 +6,7 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
+import io.netty.util.ResourceLeakDetector;
 import io.rsocket.RSocketFactory;
 import io.rsocket.rpc.demo.service.protobuf.*;
 import io.rsocket.rpc.rsocket.RequestHandlingRSocket;

@@ -13,7 +13,7 @@ public class DefaultChannelService implements ChannelService {
 
     @Override
     public Flux<Response> channel(Publisher<Request> messages, ByteBuf metadata) {
-        return Flux.from(messages).flatMap(m -> Flux.interval(Duration.ofMillis(100)).onBackpressureDrop()
-        .map(v -> Response.newBuilder().setMessage("channel: " + m.getMessage()).build()));
+        return Flux.from(messages)
+        .map(v -> Response.newBuilder().setMessage("channel: " + v.getMessage()).build());
     }
 }
