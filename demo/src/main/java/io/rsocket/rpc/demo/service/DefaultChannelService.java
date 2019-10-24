@@ -7,8 +7,6 @@ import io.rsocket.rpc.demo.service.protobuf.Response;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
-import java.time.Duration;
-
 public class DefaultChannelService implements ChannelService {
 
     @Override

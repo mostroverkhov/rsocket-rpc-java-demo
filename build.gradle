@@ -16,9 +16,7 @@ subprojects {
     }
 
     repositories {
-        mavenLocal()
         jcenter()
-        maven {url 'https://oss.jfrog.org/artifactory/libs-snapshot' }
-        maven { url 'http://repo.spring.io/milestone' }
+        maven { url 'https://oss.jfrog.org/artifactory/libs-snapshot' }
     }
 }
